@@ -30,7 +30,9 @@ def get_data(data_dir):
         class_num = labels.index(label)
         for img in os.listdir(path):
             try:
-                img_arr = cv2.imread(os.path.join(path, img))[...,::-1] #convert BGR to RGB format
+                #img_arr = cv2.imread(os.path.join(path, img))[...,::-1] #convert BGR to RGB format
+                #img_arr = cv2.cvtColor(img_arr , cv2.COLOR_BGR2GRAY)
+                img_arr = cv2.imread(os.path.join(path, img))
                 resized_arr = cv2.resize(img_arr, (img_size, img_size)) # Reshaping images to preferred size
                 for theta in range(2):
                     theta=theta/4*np.pi
@@ -41,7 +43,7 @@ def get_data(data_dir):
                                 train1=cv2.filter2D(resized_arr, cv2.CV_8UC3, kernal)
                 
                 
-                data.append([resized_arr, class_num])
+                data.append([train1, class_num])
                 
                 
                 
@@ -49,8 +51,13 @@ def get_data(data_dir):
             except Exception as e:
                 print(e)
     return np.array(data)
-train = get_data('C:/Users/lavan/flowers/train')
-val= get_data('C:/Users/lavan/flowers/train')
+train = get_data('')
+
+
+
+val= get_data('')
+
+
 # Data preprocessing
 x_train = []
 y_train = []
@@ -87,7 +94,8 @@ datagen = ImageDataGenerator(
         width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
         height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
         horizontal_flip = True,  # randomly flip images
-        vertical_flip=False)  # randomly flip images
+        vertical_flip=False
+                            )  # randomly flip images
 
 
 datagen.fit(x_train)
@@ -109,16 +117,17 @@ model.add(Dense(128,activation="relu"))
 model.add(Dense(2, activation="softmax"))
 
 model.summary()
+# Evaluating result
 
 opt = Adam(lr=0.000001)
 model.compile(optimizer = opt , loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) , metrics = ['accuracy'])
-history = model.fit(x_train,y_train,epochs = 500 , validation_data = (x_val, y_val))
+history = model.fit(x_train,y_train,epochs = 2 , validation_data = (x_val, y_val))
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
 loss = history.history['loss']
 val_loss = history.history['val_loss']
 
-epochs_range = range(500)
+epochs_range = range(2)
 
 plt.figure(figsize=(15, 15))
 plt.subplot(2, 2, 1)
@@ -135,8 +144,9 @@ plt.title('Training and Validation Loss')
 plt.show()
 
 predictions = model.predict(x_val)
-predictions = predictions.reshape(1,-1)[0]
-print(classification_report(y_val, predictions, target_names = ['0 (Class 0)','1 (Class 1)']))
+classes_x=np.argmax(predictions,axis=1)
+
+print(classification_report(y_val, classes_x, target_names = ['0 (Class 0)','1 (Class 1)']))
 
 
 
